@@ -3,8 +3,6 @@ package com.parentalormente.alerts
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
-import android.telephony.SmsManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -17,11 +15,8 @@ import com.parentalormente.detection.BullyingDetector
 import kotlinx.coroutines.flow.first
 
 /**
- * Handles alerting the parent when bullying is detected.
- *
- * Two alert channels:
- * 1. On-device notification (always)
- * 2. SMS to parent phone number (if configured)
+ * Handles on-device notifications when bullying is detected.
+ * SMS relay to parent is now handled by RealTimeRelay.
  */
 class AlertManager(private val context: Context) {
 
@@ -44,15 +39,7 @@ class AlertManager(private val context: Context) {
             return
         }
 
-        // Always show local notification
         showNotification(incident, severity)
-
-        // SMS alert if enabled
-        val smsEnabled = prefs.smsAlerts.first()
-        val parentPhone = prefs.parentPhone.first()
-        if (smsEnabled && parentPhone.isNotBlank()) {
-            sendSmsAlert(parentPhone, incident, severity)
-        }
     }
 
     private fun showNotification(incident: IncidentEntity, severity: BullyingDetector.Severity) {
@@ -89,33 +76,6 @@ class AlertManager(private val context: Context) {
                 incident.id.toInt(),
                 notification
             )
-        }
-    }
-
-    private fun sendSmsAlert(parentPhone: String, incident: IncidentEntity, severity: BullyingDetector.Severity) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            Log.w(TAG, "SEND_SMS permission not granted, skipping SMS alert")
-            return
-        }
-
-        try {
-            val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                context.getSystemService(SmsManager::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                SmsManager.getDefault()
-            }
-            val message = "[ParentalORMental] ${severity.name} alert — " +
-                "From: ${incident.sender} — ${incident.summary}"
-
-            // SMS has 160 char limit, split if needed
-            val parts = smsManager.divideMessage(message)
-            smsManager.sendMultipartTextMessage(parentPhone, null, parts, null, null)
-            Log.i(TAG, "SMS alert sent to $parentPhone")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to send SMS alert", e)
         }
     }
 }

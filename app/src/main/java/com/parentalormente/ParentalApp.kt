@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import com.parentalormente.data.db.IncidentDatabase
+import com.parentalormente.monitor.DigestWorker
 
 class ParentalApp : Application() {
 
@@ -16,6 +17,7 @@ class ParentalApp : Application() {
         instance = this
         database = IncidentDatabase.getInstance(this)
         createNotificationChannels()
+        DigestWorker.schedule(this)
     }
 
     private fun createNotificationChannels() {

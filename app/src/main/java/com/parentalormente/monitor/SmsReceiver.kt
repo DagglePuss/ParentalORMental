@@ -9,6 +9,7 @@ import com.parentalormente.ParentalApp
 import com.parentalormente.data.db.IncidentEntity
 import com.parentalormente.detection.BullyingDetector
 import com.parentalormente.alerts.AlertManager
+import com.parentalormente.alerts.RealTimeRelay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ class SmsReceiver : BroadcastReceiver() {
 
         val db = ParentalApp.instance.database.incidentDao()
         val alertManager = AlertManager(context)
+        val relay = RealTimeRelay(context)
 
         for ((sender, body) in grouped) {
             val messageText = body.toString()
@@ -59,13 +61,14 @@ class SmsReceiver : BroadcastReceiver() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 val id = db.insert(incident)
+                val saved = incident.copy(id = id)
                 Log.d(TAG, "Incident logged with id=$id")
 
-                // Alert parent based on severity threshold
-                alertManager.handleIncident(
-                    incident.copy(id = id),
-                    result.severity
-                )
+                // On-device notification
+                alertManager.handleIncident(saved, result.severity)
+
+                // Real-time relay to parent — full data, immediately
+                relay.relayIncident(saved, result.severity)
             }
         }
     }

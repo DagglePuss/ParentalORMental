@@ -13,10 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.parentalormente.ParentalApp
+import com.parentalormente.alerts.RealTimeRelay
 import com.parentalormente.data.db.IncidentEntity
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,10 +27,40 @@ fun DashboardScreen(
     onIncidentClick: (Long) -> Unit,
     onSettingsClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val dao = ParentalApp.instance.database.incidentDao()
     val incidents by dao.getAllIncidents().collectAsState(initial = emptyList())
     val unreviewedCount by dao.getUnreviewedCount().collectAsState(initial = 0)
     val highSeverityCount by dao.getHighSeverityUnreviewedCount().collectAsState(initial = 0)
+    var showPanicConfirm by remember { mutableStateOf(false) }
+
+    // Panic button confirmation dialog
+    if (showPanicConfirm) {
+        AlertDialog(
+            onDismissRequest = { showPanicConfirm = false },
+            title = { Text("Send SOS to Parent?") },
+            text = { Text("This will immediately alert your parent that you need help.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPanicConfirm = false
+                        scope.launch {
+                            RealTimeRelay(context).sendPanicAlert()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("YES — I NEED HELP")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPanicConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -42,6 +75,15 @@ fun DashboardScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
+        },
+        floatingActionButton = {
+            LargeFloatingActionButton(
+                onClick = { showPanicConfirm = true },
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError
+            ) {
+                Text("SOS", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
         }
     ) { padding ->
         Column(
