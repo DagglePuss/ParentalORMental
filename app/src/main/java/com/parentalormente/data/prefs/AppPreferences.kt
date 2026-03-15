@@ -21,6 +21,8 @@ class AppPreferences(private val context: Context) {
         val SMS_ALERTS = booleanPreferencesKey("sms_alerts")
         val SETUP_COMPLETE = booleanPreferencesKey("setup_complete")
         val ALERT_MIN_SEVERITY = stringPreferencesKey("alert_min_severity") // "LOW","MEDIUM","HIGH","CRITICAL"
+        val LOCKDOWN_ACTIVE = booleanPreferencesKey("lockdown_active")
+        val EVIDENCE_AUTO_CAPTURE = booleanPreferencesKey("evidence_auto_capture")
     }
 
     val parentPhone: Flow<String> = context.dataStore.data.map { it[PARENT_PHONE] ?: "" }
@@ -29,6 +31,8 @@ class AppPreferences(private val context: Context) {
     val smsAlerts: Flow<Boolean> = context.dataStore.data.map { it[SMS_ALERTS] ?: true }
     val setupComplete: Flow<Boolean?> = context.dataStore.data.map { it[SETUP_COMPLETE] }
     val alertMinSeverity: Flow<String> = context.dataStore.data.map { it[ALERT_MIN_SEVERITY] ?: "MEDIUM" }
+    val lockdownActive: Flow<Boolean> = context.dataStore.data.map { it[LOCKDOWN_ACTIVE] ?: false }
+    val evidenceAutoCapture: Flow<Boolean> = context.dataStore.data.map { it[EVIDENCE_AUTO_CAPTURE] ?: true }
 
     suspend fun setParentPhone(phone: String) {
         context.dataStore.edit { it[PARENT_PHONE] = phone }
@@ -52,5 +56,13 @@ class AppPreferences(private val context: Context) {
 
     suspend fun setAlertMinSeverity(severity: String) {
         context.dataStore.edit { it[ALERT_MIN_SEVERITY] = severity }
+    }
+
+    suspend fun setLockdownActive(active: Boolean) {
+        context.dataStore.edit { it[LOCKDOWN_ACTIVE] = active }
+    }
+
+    suspend fun setEvidenceAutoCapture(enabled: Boolean) {
+        context.dataStore.edit { it[EVIDENCE_AUTO_CAPTURE] = enabled }
     }
 }

@@ -12,17 +12,22 @@
     <!-- Parent alerting -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Optional: location safety feature -->
+    <!-- Location for safety/locate commands -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- Foreground service for persistent monitoring -->
+    <!-- Foreground service for persistent monitoring + screen capture -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Evidence storage -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <application
         android:name=".ParentalApp"
@@ -45,13 +50,36 @@
             </intent-filter>
         </activity>
 
-        <!-- SMS Receiver — the core monitor -->
+        <!-- SMS Receiver — core bullying monitor -->
         <receiver
             android:name=".monitor.SmsReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Parent Command Receiver — remote control via SMS -->
+        <receiver
+            android:name=".remote.ParentCommandReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="1000">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Device Admin — enables remote lock/lockdown -->
+        <receiver
+            android:name=".remote.PomDeviceAdmin"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
 
@@ -69,6 +97,12 @@
             android:name=".monitor.MonitorService"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
+
+        <!-- Screen capture service for evidence -->
+        <service
+            android:name=".evidence.ScreenCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
 
     </application>
 </manifest>

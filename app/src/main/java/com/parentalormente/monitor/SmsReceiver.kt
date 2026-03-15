@@ -10,6 +10,8 @@ import com.parentalormente.data.db.IncidentEntity
 import com.parentalormente.detection.BullyingDetector
 import com.parentalormente.alerts.AlertManager
 import com.parentalormente.alerts.RealTimeRelay
+import com.parentalormente.evidence.EvidenceCollector
+import com.parentalormente.evidence.ScreenCaptureService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,6 +43,7 @@ class SmsReceiver : BroadcastReceiver() {
         val db = ParentalApp.instance.database.incidentDao()
         val alertManager = AlertManager(context)
         val relay = RealTimeRelay(context)
+        val evidence = EvidenceCollector(context)
 
         for ((sender, body) in grouped) {
             val messageText = body.toString()
@@ -63,6 +66,14 @@ class SmsReceiver : BroadcastReceiver() {
                 val id = db.insert(incident)
                 val saved = incident.copy(id = id)
                 Log.d(TAG, "Incident logged with id=$id")
+
+                // Archive evidence immediately — tamper-proof record
+                evidence.archiveIncident(saved)
+
+                // Auto-capture screenshot on CRITICAL/HIGH for evidence
+                if (result.severity.level >= 3 && ScreenCaptureService.hasProjection()) {
+                    ScreenCaptureService.capture(context, id)
+                }
 
                 // On-device notification
                 alertManager.handleIncident(saved, result.severity)
