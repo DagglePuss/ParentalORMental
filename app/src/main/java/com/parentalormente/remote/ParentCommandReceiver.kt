@@ -12,6 +12,7 @@ import android.util.Log
 import com.parentalormente.data.prefs.AppPreferences
 import com.parentalormente.evidence.EvidenceCollector
 import com.parentalormente.evidence.ScreenCaptureService
+import com.parentalormente.monitor.CrisisOverlayService
 import com.parentalormente.ParentalApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,8 @@ import kotlinx.coroutines.launch
  *   POM:STATUS        — Reply with current monitoring status
  *   POM:EXPORT        — Generate and archive a full evidence report
  *   POM:UNLOCK        — Release lockdown mode
+ *   POM:CRISIS        — Show the crisis overlay screen on child's device
+ *   POM:CRISIS:OFF    — Dismiss the crisis overlay remotely
  *
  * Security: Only responds to SMS from the registered parent phone number.
  * All commands are logged.
@@ -93,7 +96,9 @@ class ParentCommandReceiver : BroadcastReceiver() {
             command == "SCREENSHOT" -> cmdScreenshot(context, parentPhone)
             command == "STATUS" -> cmdStatus(context, parentPhone)
             command == "EXPORT" -> cmdExport(context, parentPhone)
-            else -> reply(context, parentPhone, "Unknown command: $command\n\nAvailable: LOCK, LOCKDOWN, UNLOCK, LOCATE, SCREENSHOT, STATUS, EXPORT")
+            command == "CRISIS" -> cmdCrisis(context, parentPhone)
+            command == "CRISIS:OFF" -> cmdCrisisOff(context, parentPhone)
+            else -> reply(context, parentPhone, "Unknown command: $command\n\nAvailable: LOCK, LOCKDOWN, UNLOCK, LOCATE, SCREENSHOT, STATUS, EXPORT, CRISIS, CRISIS:OFF")
         }
     }
 
@@ -204,6 +209,24 @@ class ParentCommandReceiver : BroadcastReceiver() {
         val dao = ParentalApp.instance.database.incidentDao()
         val report = collector.exportFullReport(dao)
         reply(context, parentPhone, "Evidence report generated: ${report.name}\n\nConnect device to computer to retrieve from app storage, or open the app to share.")
+    }
+
+    /**
+     * CRISIS — Show the crisis overlay on the child's device.
+     */
+    private fun cmdCrisis(context: Context, parentPhone: String) {
+        CrisisOverlayService.show(context)
+        reply(context, parentPhone, "Crisis support screen activated on child's device.")
+        Log.i(TAG, "Crisis overlay shown by parent command")
+    }
+
+    /**
+     * CRISIS:OFF — Dismiss the crisis overlay remotely.
+     */
+    private fun cmdCrisisOff(context: Context, parentPhone: String) {
+        CrisisOverlayService.dismiss(context)
+        reply(context, parentPhone, "Crisis support screen dismissed.")
+        Log.i(TAG, "Crisis overlay dismissed by parent command")
     }
 
     private fun reply(context: Context, phone: String, message: String) {

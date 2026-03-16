@@ -25,6 +25,9 @@
     <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Crisis overlay — draw over other apps for crisis intervention screen -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <!-- Evidence storage -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -105,6 +108,15 @@
             </intent-filter>
         </receiver>
 
+        <!-- Call monitoring — detects harassment via call log patterns -->
+        <receiver
+            android:name=".monitor.CallReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
+
         <!-- Boot receiver — restart monitoring after reboot -->
         <receiver
             android:name=".monitor.BootReceiver"
@@ -125,6 +137,12 @@
             android:name=".evidence.ScreenCaptureService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
+
+        <!-- Crisis overlay service — full-screen intervention for self-harm situations -->
+        <service
+            android:name=".monitor.CrisisOverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
 
     </application>
 </manifest>

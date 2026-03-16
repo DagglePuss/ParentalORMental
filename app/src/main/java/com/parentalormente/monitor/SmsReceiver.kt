@@ -10,6 +10,7 @@ import com.parentalormente.data.db.IncidentEntity
 import com.parentalormente.detection.BullyingDetector
 import com.parentalormente.alerts.AlertManager
 import com.parentalormente.alerts.RealTimeRelay
+import android.provider.Settings
 import com.parentalormente.evidence.EvidenceCollector
 import com.parentalormente.evidence.ScreenCaptureService
 import kotlinx.coroutines.CoroutineScope
@@ -73,6 +74,11 @@ class SmsReceiver : BroadcastReceiver() {
                 // Auto-capture screenshot on CRITICAL/HIGH for evidence
                 if (result.severity.level >= 3 && ScreenCaptureService.hasProjection()) {
                     ScreenCaptureService.capture(context, id)
+                }
+
+                // Crisis overlay — shown on-device when suicide/self-harm language detected
+                if (result.isSuicideCrisis && Settings.canDrawOverlays(context)) {
+                    CrisisOverlayService.show(context)
                 }
 
                 // On-device notification
