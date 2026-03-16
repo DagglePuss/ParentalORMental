@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
@@ -25,7 +26,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun DashboardScreen(
     onIncidentClick: (Long) -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onEvidenceClick: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -67,6 +69,9 @@ fun DashboardScreen(
             TopAppBar(
                 title = { Text("ParentalORMental") },
                 actions = {
+                    IconButton(onClick = onEvidenceClick) {
+                        Icon(Icons.Default.Folder, contentDescription = "Evidence files")
+                    }
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }

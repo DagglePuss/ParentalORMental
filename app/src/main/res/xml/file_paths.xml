@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Covers evidence/ and evidence/screenshots/ under filesDir -->
+    <files-path name="evidence" path="evidence/" />
+</paths>

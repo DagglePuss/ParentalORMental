@@ -1,5 +1,6 @@
 package com.parentalormente.ui
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,6 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.parentalormente.data.prefs.AppPreferences
 import com.parentalormente.ui.screens.DashboardScreen
+import com.parentalormente.ui.screens.EvidenceBrowserScreen
+import com.parentalormente.ui.screens.EvidenceFileViewerScreen
 import com.parentalormente.ui.screens.IncidentDetailScreen
 import com.parentalormente.ui.screens.SetupScreen
 import com.parentalormente.ui.screens.SettingsScreen
@@ -28,7 +31,6 @@ fun ParentalNavHost() {
 
     val resolved = setupComplete
     if (resolved == null) {
-        // Brief loading while DataStore reads from disk
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
@@ -49,7 +51,8 @@ fun ParentalNavHost() {
         composable("dashboard") {
             DashboardScreen(
                 onIncidentClick = { id -> navController.navigate("incident/$id") },
-                onSettingsClick = { navController.navigate("settings") }
+                onSettingsClick = { navController.navigate("settings") },
+                onEvidenceClick = { navController.navigate("evidence") }
             )
         }
         composable("incident/{id}") { backStackEntry ->
@@ -58,6 +61,19 @@ fun ParentalNavHost() {
         }
         composable("settings") {
             SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable("evidence") {
+            EvidenceBrowserScreen(
+                onBack = { navController.popBackStack() },
+                onViewTextFile = { path ->
+                    navController.navigate("evidence/view/${Uri.encode(path)}")
+                }
+            )
+        }
+        composable("evidence/view/{path}") { backStackEntry ->
+            val path = backStackEntry.arguments?.getString("path")
+                ?.let { Uri.decode(it) } ?: return@composable
+            EvidenceFileViewerScreen(filePath = path, onBack = { navController.popBackStack() })
         }
     }
 }
