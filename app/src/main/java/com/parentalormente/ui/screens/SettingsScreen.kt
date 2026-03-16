@@ -1,5 +1,7 @@
 package com.parentalormente.ui.screens
 
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -83,15 +85,26 @@ fun SettingsScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Stealth Mode")
                     Text(
-                        "Hide app from launcher (access via dialer code)",
+                        "Hide app from launcher — re-open by dialing *#*#7676#*#*",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Switch(
                     checked = stealthMode,
-                    onCheckedChange = {
-                        scope.launch { prefs.setStealthMode(it) }
+                    onCheckedChange = { enabled ->
+                        scope.launch { prefs.setStealthMode(enabled) }
+                        val alias = ComponentName(
+                            context.packageName,
+                            "${context.packageName}.ui.MainActivityLauncher"
+                        )
+                        val state = if (enabled)
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                        else
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                        context.packageManager.setComponentEnabledSetting(
+                            alias, state, PackageManager.DONT_KILL_APP
+                        )
                     }
                 )
             }

